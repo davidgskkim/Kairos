@@ -15,9 +15,9 @@ preference_with_geumseong = {
     "Jonnah": 1,
     "Minal": 4,
     "Minjung": 1,
-    "Yujin": 2,
+    "Yujin": 3,
     "Seoyoon": 1,
-    "Fionna": 3,
+    "Fionna": 2,
     "Purvesh": 1,
     "Mandy": 5,
 }
@@ -37,11 +37,15 @@ if not row.empty:
             # Same logic as parse_employees
             shifts = []
             if value == "ON":
-                shifts = ["10-5", "5-11:30"]
+                shifts = (
+                    ["10-5", "5-11:30"]
+                    if day != "SAT"
+                    else ["10-5", "5-10:30", "5-11:30"]
+                )
             elif value == "OPEN":
                 shifts = ["10-5"]
             elif value == "CLOSE":
-                shifts = ["5-11:30"]
+                shifts = ["5-11:30"] if day != "SAT" else ["5-10:30", "5-11:30"]
             for time in shifts:
                 if time == "5-11:30" and day == "SAT":
                     geumseong_shifts.append(f"{day} 5-11:30 A")
