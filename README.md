@@ -1,6 +1,7 @@
 📅 Employee Shift Scheduler
 
-    This is a Flask web app that automatically generates optimized employee shift schedules based on uploaded Excel files containing weekly availability and preferences.
+    This is a Flask web app that automatically generates optimized employee shift schedules based on
+    uploaded Excel files containing weekly availability and preferences.
 
 🚀 Features
 
