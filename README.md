@@ -35,6 +35,7 @@ shift_scheduler/
 ├── requirements.txt
 └── render.yaml # Render deploy config
 
+
 📦 Requirements
 
     Python 3.8+
