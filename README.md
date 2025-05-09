@@ -22,7 +22,8 @@ This is a Flask web app that automatically generates optimized employee shift sc
 
     🌐 Deployed and styled with Bootstrap 5
 
-### 📁 Project Structure
+```bash
+📁 Project Structure
 shift_scheduler/
 ├── app.py # Flask app
 ├── templates/
@@ -33,7 +34,7 @@ shift_scheduler/
 ├── generate_schedule.py # Core scheduling logic
 ├── requirements.txt
 └── render.yaml # Render deploy config
-###
+```
 
 
 📦 Requirements
