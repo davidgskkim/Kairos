@@ -1,57 +1,7 @@
-from parse_employees import employees, all_shifts
+import pandas as pd
+import os
 
 DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
-
-# Preferences from spreadsheet
-preference = {emp["name"]: emp.get("preference", 3) for emp in employees}
-employee_priority = {e["name"]: idx for idx, e in enumerate(employees)}
-
-# -------------------------
-# Static preference for working with Geumseong (1 = least prefer, 5 = most prefer)
-# -------------------------
-preference_with_geumseong = {
-    "Sam": 5,
-    "Sungwoo": 5,
-    "Jonnah": 1,
-    "Minal": 4,
-    "Minjung": 1,
-    "Yujin": 3,
-    "Seoyoon": 1,
-    "Fionna": 2,
-    "Purvesh": 1,
-    "Mandy": 5,
-}
-
-# -------------------------
-# Find Geumseong's shifts
-# -------------------------
-geumseong_shifts = []
-import pandas as pd
-
-df = pd.read_excel("FOH availability.xlsx")
-row = df[df["Unnamed: 0"].str.strip().str.lower() == "geumseong"]
-if not row.empty:
-    for day in DAYS:
-        value = str(row.iloc[0][day]).strip().upper()
-        if value in ["OPEN", "ON", "CLOSE"]:
-            # Same logic as parse_employees
-            shifts = []
-            if value == "ON":
-                shifts = (
-                    ["10-5", "5-11:30"]
-                    if day != "SAT"
-                    else ["10-5", "5-10:30", "5-11:30"]
-                )
-            elif value == "OPEN":
-                shifts = ["10-5"]
-            elif value == "CLOSE":
-                shifts = ["5-11:30"] if day != "SAT" else ["5-10:30", "5-11:30"]
-            for time in shifts:
-                if time == "5-11:30" and day == "SAT":
-                    geumseong_shifts.append(f"{day} 5-11:30 A")
-                    geumseong_shifts.append(f"{day} 5-11:30 B")
-                else:
-                    geumseong_shifts.append(f"{day} {time}")
 
 
 # -------------------------
@@ -77,118 +27,125 @@ def shifts_overlap(shift1, shift2):
     if day1 != day2:
         return False
     if ("A" in time1 and "B" in time2) or ("B" in time1 and "A" in time2):
-        base1 = time1.replace("A", "").replace("B", "")
-        base2 = time2.replace("A", "").replace("B", "")
-        if base1 == base2:
+        if time1.replace("A", "").replace("B", "") == time2.replace("A", "").replace(
+            "B", ""
+        ):
             return True
-    t1 = time1.replace("A", "").replace("B", "")
-    t2 = time2.replace("A", "").replace("B", "")
-    if t1 in ["10-5", "12-5"] and t2 in ["10-5", "12-5"]:
-        return True
-    if t1 in ["5-10:30", "5-11:30"] and t2 in ["5-10:30", "5-11:30"]:
-        return True
     s1_start, s1_end = parse_start_end(shift1)
     s2_start, s2_end = parse_start_end(shift2)
     return not (s1_end <= s2_start or s2_end <= s1_start)
 
 
-# -------------------------
-# Preprocess
-# -------------------------
-remaining_ideal = {e["name"]: e["ideal_shifts"] for e in employees}
-assigned_shifts = {e["name"]: [] for e in employees}
-availability_clean = {e["name"]: set(e["availability"]) for e in employees}
-schedule = {shift: None for shift in all_shifts}
+def get_geumseong_shifts(file_path):
+    geumseong_shifts = []
+    df = pd.read_excel(file_path)
+    row = df[df["Unnamed: 0"].str.strip().str.lower() == "geumseong"]
+    if row.empty:
+        return []
+
+    for day in DAYS:
+        value = str(row.iloc[0][day]).strip().upper()
+        if value in ["ON", "OPEN", "CLOSE"]:
+            if value == "ON":
+                shifts = ["10-5", "5-11:30"]
+            elif value == "OPEN":
+                shifts = ["10-5"]
+            elif value == "CLOSE":
+                shifts = ["5-11:30"]
+            for time in shifts:
+                if time == "5-11:30" and day == "SAT":
+                    geumseong_shifts.extend([f"{day} 5-11:30 A", f"{day} 5-11:30 B"])
+                else:
+                    geumseong_shifts.append(f"{day} {time}")
+    return geumseong_shifts
+
 
 # -------------------------
-# Step 1: Rank shifts by flexibility (least flexible first)
+# Main generation logic
 # -------------------------
-shift_availability = {
-    shift: len([e for e in employees if shift in e["availability"]])
-    for shift in all_shifts
-}
+def generate_schedule(employees, file_path):
+    all_shifts = list({slot for e in employees for slot in e["availability"]})
 
-shift_order = sorted(all_shifts, key=lambda s: shift_availability[s])
+    preference = {emp["name"]: emp.get("preference", 3) for emp in employees}
+    employee_priority = {e["name"]: idx for idx, e in enumerate(employees)}
+    geumseong_shifts = get_geumseong_shifts(file_path)
 
-print("Shift priority order (least to most flexible):")
-for s in shift_order:
-    print(f"{s}: {shift_availability[s]} available employees")
+    preference_with_geumseong = {
+        "Sam": 5,
+        "Sungwoo": 5,
+        "Jonnah": 1,
+        "Minal": 4,
+        "Minjung": 1,
+        "Yujin": 3,
+        "Seoyoon": 1,
+        "Fionna": 2,
+        "Purvesh": 1,
+        "Mandy": 5,
+    }
 
-# -------------------------
-# Step 2: Assignment
-# -------------------------
-for shift in shift_order:
-    day = shift.split()[0]
-    print(f"\n--- Considering shift {shift} ---")
+    remaining_ideal = {e["name"]: e["ideal_shifts"] for e in employees}
+    assigned_shifts = {e["name"]: [] for e in employees}
+    availability_clean = {e["name"]: set(e["availability"]) for e in employees}
+    schedule = {shift: None for shift in all_shifts}
 
-    possible_emps = []
-    for emp in employees:
-        name = emp["name"]
-        already_working = any(s.startswith(day) for s in assigned_shifts[name])
-        overlap = any(shifts_overlap(shift, s) for s in assigned_shifts[name])
-        if (
-            remaining_ideal[name] > 0
-            and shift in emp["availability"]
-            and not overlap
-            and not already_working
-        ):
-            possible_emps.append(emp)
-        else:
-            print(
-                f"Skipped {name} for {shift}:",
-                {
-                    "shift_in_avail": shift in emp["availability"],
-                    "remaining_ideal": remaining_ideal[name],
-                    "overlap": overlap,
-                    "already_working": already_working,
-                },
-            )
+    shift_availability = {
+        shift: len([e for e in employees if shift in e["availability"]])
+        for shift in all_shifts
+    }
+    shift_order = sorted(all_shifts, key=lambda s: shift_availability[s])
 
-    if possible_emps:
+    for shift in shift_order:
+        day = shift.split()[0]
+        possible_emps = []
+        for emp in employees:
+            name = emp["name"]
+            already_working = any(s.startswith(day) for s in assigned_shifts[name])
+            overlap = any(shifts_overlap(shift, s) for s in assigned_shifts[name])
+            if (
+                remaining_ideal[name] > 0
+                and shift in emp["availability"]
+                and not overlap
+                and not already_working
+            ):
+                possible_emps.append(emp)
 
-        def sort_key(e):
-            # If this shift overlaps Geumseong's shift, sort by 'preference_with_geumseong'
-            prefers = preference_with_geumseong.get(e["name"], 3)
-            if shift in geumseong_shifts:
-                return (
-                    employee_priority[e["name"]],
-                    5 - prefers,
-                )  # Higher prefer = lower sort value
-            else:
-                return (employee_priority[e["name"]], preference[e["name"]])
+        if possible_emps:
 
-        possible_emps.sort(key=sort_key)
-        chosen = possible_emps[0]
-        name = chosen["name"]
-        schedule[shift] = name
-        remaining_ideal[name] -= 1
-        assigned_shifts[name].append(shift)
-        print(f"✅ Assigned {shift} to {name}")
-    else:
-        print(f"⚠️ No available employee for {shift}")
+            def sort_key(e):
+                prefers = preference_with_geumseong.get(e["name"], 3)
+                if shift in geumseong_shifts:
+                    return (employee_priority[e["name"]], 5 - prefers)
+                else:
+                    return (employee_priority[e["name"]], preference[e["name"]])
 
-# -------------------------
-# Report
-# -------------------------
-final_counts = {emp["name"]: 0 for emp in employees}
-for assigned_emp in schedule.values():
-    if assigned_emp:
-        final_counts[assigned_emp] += 1
+            possible_emps.sort(key=sort_key)
+            chosen = possible_emps[0]
+            name = chosen["name"]
+            schedule[shift] = name
+            remaining_ideal[name] -= 1
+            assigned_shifts[name].append(shift)
 
-print("\nFinal assigned shifts per employee (exact quotas target):")
-for emp in employees:
-    name = emp["name"]
-    print(f"{name}: {final_counts[name]} shifts (ideal: {emp['ideal_shifts']})")
+        # Return schedule as a dictionary grouped by day for table display
+    structured = {day: [] for day in DAYS}
+    for shift, emp in schedule.items():
+        day, time = shift.split(maxsplit=1)
+        structured[day].append((time, emp if emp else "[Unfilled]"))
 
-print("\nFinal Schedule:")
-for day in DAYS:
-    day_shifts = sorted(
-        [s for s in all_shifts if s.startswith(day)],
-        key=lambda x: x.split()[1],
-    )
-    for shift in day_shifts:
-        emp = schedule.get(shift, None)
-        if emp:
-            print(f"{shift}: {emp}")
-        else:
-            print(f"{shift}: [Unfilled]")
+    # Sort each day's shifts by start time
+    for day in structured:
+        structured[day].sort(key=lambda s: parse_start_end(f"{day} {s[0]}")[0])
+
+    # Save to Excel
+    output_path = os.path.join("static", "latest_schedule.xlsx")
+    save_schedule_excel(structured, output_path)
+
+    return structured
+
+
+def save_schedule_excel(structured_schedule, output_path):
+    rows = []
+    for day, shifts in structured_schedule.items():
+        for time, emp in shifts:
+            rows.append({"Day": day, "Time": time, "Employee": emp})
+    df = pd.DataFrame(rows)
+    df.to_excel(output_path, index=False)
