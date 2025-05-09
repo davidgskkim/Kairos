@@ -2,7 +2,6 @@
 
 This is a Flask web app that automatically generates optimized employee shift schedules based on uploaded Excel files containing weekly availability and preferences.
 
-<!-- optional if you have one -->
 🚀 Features
 
     📤 Upload .xlsx Excel files with weekly availability
@@ -34,6 +33,7 @@ shift_scheduler/
 ├── generate_schedule.py # Core scheduling logic
 ├── requirements.txt
 └── render.yaml # Render deploy config
+###
 
 
 📦 Requirements
