@@ -44,21 +44,22 @@ shift_scheduler/
 
     pip
 
-Install dependencies:
+📦 Install dependencies:
 
-pip install -r requirements.txt
+    pip install -r requirements.txt
 
 🧪 Running Locally
 
-python app.py
+    python app.py
 
-Then go to http://localhost:5000
+    Then go to http://localhost:5000
+
 
 🔧 Excel Format Example
 
-The uploaded file must include:
-(no header)	MON	TUE	...	SUN	Ideal	Preference
-Alice	ON	OFF	...	ON	4	3
+    The uploaded file must include:
+    (no header)	MON	TUE	...	SUN	Ideal	Preference
+    Alice	ON	OFF	...	ON	4	3
 
 Values:
 
@@ -72,7 +73,7 @@ Values:
 
 ☁️ Deployment
 
-The app is deployed via Render.com using render.yaml.
+    The app is deployed via Render.com using render.yaml.
 
 To redeploy:
 
@@ -82,5 +83,6 @@ To redeploy:
 
 📄 License
 
-MIT License.
-Feel free to fork and adapt to your own scheduling needs.
+    MIT License.
+    Feel free to fork and adapt to your own scheduling needs.
+
