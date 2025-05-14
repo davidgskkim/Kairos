@@ -81,6 +81,7 @@ def generate_schedule(employees, file_path):
         "Fionna": 2,
         "Purvesh": 1,
         "Mandy": 5,
+        "Esther": 5,
     }
 
     remaining_ideal = {e["name"]: e["ideal_shifts"] for e in employees}
@@ -132,8 +133,18 @@ def generate_schedule(employees, file_path):
         structured[day].append((time, emp if emp else "[Unfilled]"))
 
     # Sort each day's shifts by start time
+    def sort_key_with_suffix(day_and_time):
+        time_str = day_and_time[0]  # like "5-11:30 A"
+        start = parse_start_end(f"DUMMY {time_str}")[0]  # just need start time
+        suffix = "Z"  # default suffix (so non-A/B always come after A/B)
+        if time_str.endswith("A"):
+            suffix = "A"
+        elif time_str.endswith("B"):
+            suffix = "B"
+        return (start, suffix)
+
     for day in structured:
-        structured[day].sort(key=lambda s: parse_start_end(f"{day} {s[0]}")[0])
+        structured[day].sort(key=sort_key_with_suffix)
 
     # Save to Excel
     output_path = os.path.join("static", "latest_schedule.xlsx")

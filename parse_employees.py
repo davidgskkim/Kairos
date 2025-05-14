@@ -36,6 +36,10 @@ def parse_schedule(file_path):
             for time in day_shifts:
                 if time == "5-11:30" and day == "SAT":
                     availability.extend([f"{day} 5-11:30 A", f"{day} 5-11:30 B"])
+                elif time == "5-11:30" and day == "SUN":
+                    availability.extend([f"{day} 5-11:30 A", f"{day} 5-11:30 B"])
+                elif time == "10-5" and day == "SAT":
+                    availability.extend([f"{day} 10-5", f"{day} 12-5"])
                 else:
                     availability.append(f"{day} {time}")
 
