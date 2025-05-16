@@ -81,7 +81,6 @@ def generate_schedule(employees, file_path):
         "Fionna": 2,
         "Purvesh": 1,
         "Mandy": 5,
-        "Esther": 5,
     }
 
     remaining_ideal = {e["name"]: e["ideal_shifts"] for e in employees}
@@ -114,7 +113,8 @@ def generate_schedule(employees, file_path):
 
             def sort_key(e):
                 prefers = preference_with_geumseong.get(e["name"], 3)
-                if shift in geumseong_shifts:
+                has_overlap_with_geumseong = any(shifts_overlap(shift, gs) for gs in geumseong_shifts)
+                if has_overlap_with_geumseong:
                     return (employee_priority[e["name"]], 5 - prefers)
                 else:
                     return (employee_priority[e["name"]], preference[e["name"]])
@@ -160,3 +160,4 @@ def save_schedule_excel(structured_schedule, output_path):
             rows.append({"Day": day, "Time": time, "Employee": emp})
     df = pd.DataFrame(rows)
     df.to_excel(output_path, index=False)
+
