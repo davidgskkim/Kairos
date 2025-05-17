@@ -4,9 +4,6 @@ import os
 DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
 
-# -------------------------
-# Helper functions
-# -------------------------
 def parse_start_end(shift):
     time = shift.split()[1].replace("A", "").replace("B", "").strip()
     start, end = time.split("-")
@@ -60,32 +57,28 @@ def get_geumseong_shifts(file_path):
     return geumseong_shifts
 
 
-# -------------------------
-# Main generation logic
-# -------------------------
 def generate_schedule(employees, file_path):
     all_shifts = list({slot for e in employees for slot in e["availability"]})
 
-    preference = {emp["name"]: emp.get("preference", 3) for emp in employees}
+    preference = {emp["clean_name"]: emp.get("preference", 3) for emp in employees}
     employee_priority = {e["name"]: idx for idx, e in enumerate(employees)}
     geumseong_shifts = get_geumseong_shifts(file_path)
 
     preference_with_geumseong = {
-        "Sam": 5,
-        "Sungwoo": 5,
-        "Jonnah": 2,
-        "Minal": 4,
-        "Minjung": 1,
-        "Yujin": 3,
-        "Seoyoon": 2,
-        "Fionna": 2,
-        "Purvesh": 1,
-        "Mandy": 5,
+        "sam": 5,
+        "sungwoo": 4,
+        "jonnah": 2,
+        "minal": 4,
+        "minjung": 1,
+        "yujin": 3,
+        "seoyoon": 2,
+        "fionna": 2,
+        "purvesh": 1,
+        "mandy": 5,
     }
 
     remaining_ideal = {e["name"]: e["ideal_shifts"] for e in employees}
     assigned_shifts = {e["name"]: [] for e in employees}
-    availability_clean = {e["name"]: set(e["availability"]) for e in employees}
     schedule = {shift: None for shift in all_shifts}
 
     shift_availability = {
@@ -112,16 +105,15 @@ def generate_schedule(employees, file_path):
         if possible_emps:
 
             def sort_key(e):
-                prefers = preference_with_geumseong.get(e["name"], 3)
+                clean_name = e["clean_name"]
+                prefers = preference_with_geumseong.get(clean_name, 3)
                 has_overlap_with_geumseong = any(shifts_overlap(shift, gs) for gs in geumseong_shifts)
                 if has_overlap_with_geumseong and prefers == 1:
-                    # Return a huge penalty number to effectively exclude low preference
                     return (9999, employee_priority[e["name"]])
                 elif has_overlap_with_geumseong:
                     return (5 - prefers, employee_priority[e["name"]])
                 else:
-                    return (preference[e["name"]], employee_priority[e["name"]])
-
+                    return (preference.get(clean_name, 3), employee_priority[e["name"]])
 
             possible_emps.sort(key=sort_key)
             chosen = possible_emps[0]
@@ -130,17 +122,15 @@ def generate_schedule(employees, file_path):
             remaining_ideal[name] -= 1
             assigned_shifts[name].append(shift)
 
-        # Return schedule as a dictionary grouped by day for table display
     structured = {day: [] for day in DAYS}
     for shift, emp in schedule.items():
         day, time = shift.split(maxsplit=1)
         structured[day].append((time, emp if emp else "[Unfilled]"))
 
-    # Sort each day's shifts by start time
     def sort_key_with_suffix(day_and_time):
-        time_str = day_and_time[0]  # like "5-11:30 A"
-        start = parse_start_end(f"DUMMY {time_str}")[0]  # just need start time
-        suffix = "Z"  # default suffix (so non-A/B always come after A/B)
+        time_str = day_and_time[0]
+        start = parse_start_end(f"DUMMY {time_str}")[0]
+        suffix = "Z"
         if time_str.endswith("A"):
             suffix = "A"
         elif time_str.endswith("B"):
@@ -150,7 +140,6 @@ def generate_schedule(employees, file_path):
     for day in structured:
         structured[day].sort(key=sort_key_with_suffix)
 
-    # Save to Excel
     output_path = os.path.join("static", "latest_schedule.xlsx")
     save_schedule_excel(structured, output_path)
 
@@ -164,3 +153,21 @@ def save_schedule_excel(structured_schedule, output_path):
             rows.append({"Day": day, "Time": time, "Employee": emp})
     df = pd.DataFrame(rows)
     df.to_excel(output_path, index=False)
+
+# if __name__ == "__main__":
+#     try:
+#         from parse_employees import parse_schedule
+
+#         filepath = "FOH Availability May 19-25.xlsx"
+#         employees = parse_schedule(filepath)
+#         print(f"Parsed {len(employees)} employees")
+
+#         schedule = generate_schedule(employees, filepath)
+
+#         print("\nGenerated Schedule:")
+#         for day in DAYS:
+#             for time, emp in schedule[day]:
+#                 print(f"{day} {time}: {emp}")
+
+#     except Exception as e:
+#         print("❌ Error running schedule generation:", e)

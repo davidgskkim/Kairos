@@ -1,4 +1,5 @@
 import pandas as pd
+import re
 
 SHIFT_TIMES = {
     "Open": ["10-5"],
@@ -7,6 +8,8 @@ SHIFT_TIMES = {
 
 DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
+def clean_name(name: str) -> str:
+    return re.sub(r'[^a-zA-Z]', '', name).lower()
 
 def parse_schedule(file_path):
     df = pd.read_excel(file_path)
@@ -14,7 +17,8 @@ def parse_schedule(file_path):
     employees = []
 
     for idx, row in df.iterrows():
-        name = str(row["Unnamed: 0"]).strip()
+        raw_name = str(row["Unnamed: 0"]).strip()
+        clean = clean_name(raw_name)
         availability = []
 
         for day in DAYS:
@@ -52,10 +56,11 @@ def parse_schedule(file_path):
         except:
             preference = 3
 
-        if name.lower() != "geumseong":
+        if clean != "geumseong":
             employees.append(
                 {
-                    "name": name,
+                    "name": raw_name,
+                    "clean_name": clean,
                     "availability": availability,
                     "ideal_shifts": ideal_shifts,
                     "preference": preference,
