@@ -9,7 +9,8 @@ SHIFT_TIMES = {
 DAYS = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
 
 def clean_name(name: str) -> str:
-    return re.sub(r'[^a-zA-Z]', '', name).lower()
+    # Remove anything that is not a letter or space, then strip
+    return re.sub(r"[^a-zA-Z ]", "", name).strip()
 
 def parse_schedule(file_path):
     df = pd.read_excel(file_path)
@@ -18,7 +19,7 @@ def parse_schedule(file_path):
 
     for idx, row in df.iterrows():
         raw_name = str(row["Unnamed: 0"]).strip()
-        clean = clean_name(raw_name)
+        name = clean_name(raw_name)  # Clean the name here
         availability = []
 
         for day in DAYS:
@@ -56,11 +57,10 @@ def parse_schedule(file_path):
         except:
             preference = 3
 
-        if clean != "geumseong":
+        if name.lower() != "geumseong":
             employees.append(
                 {
-                    "name": raw_name,
-                    "clean_name": clean,
+                    "name": name,
                     "availability": availability,
                     "ideal_shifts": ideal_shifts,
                     "preference": preference,

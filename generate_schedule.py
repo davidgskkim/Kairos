@@ -60,13 +60,9 @@ def get_geumseong_shifts(file_path):
 def generate_schedule(employees, file_path):
     all_shifts = list({slot for e in employees for slot in e["availability"]})
 
-    preference = {emp["clean_name"]: emp.get("preference", 3) for emp in employees}
-    employee_priority = {e["name"]: idx for idx, e in enumerate(employees)}
-    geumseong_shifts = get_geumseong_shifts(file_path)
-
     preference_with_geumseong = {
         "sam": 5,
-        "sungwoo": 4,
+        "sungwoo": 5,
         "jonnah": 2,
         "minal": 4,
         "minjung": 1,
@@ -77,9 +73,12 @@ def generate_schedule(employees, file_path):
         "mandy": 5,
     }
 
+    employee_priority = {e["name"]: idx for idx, e in enumerate(employees)}
     remaining_ideal = {e["name"]: e["ideal_shifts"] for e in employees}
     assigned_shifts = {e["name"]: [] for e in employees}
     schedule = {shift: None for shift in all_shifts}
+
+    geumseong_shifts = get_geumseong_shifts(file_path)
 
     shift_availability = {
         shift: len([e for e in employees if shift in e["availability"]])
@@ -94,28 +93,20 @@ def generate_schedule(employees, file_path):
             name = emp["name"]
             already_working = any(s.startswith(day) for s in assigned_shifts[name])
             overlap = any(shifts_overlap(shift, s) for s in assigned_shifts[name])
+            prefers = preference_with_geumseong.get(emp["name"].lower(), 3)
+            has_overlap_with_geumseong = any(shifts_overlap(shift, gs) for gs in geumseong_shifts)
+
             if (
                 remaining_ideal[name] > 0
                 and shift in emp["availability"]
                 and not overlap
                 and not already_working
+                and not (has_overlap_with_geumseong and prefers == 1)
             ):
                 possible_emps.append(emp)
 
         if possible_emps:
-
-            def sort_key(e):
-                clean_name = e["clean_name"]
-                prefers = preference_with_geumseong.get(clean_name, 3)
-                has_overlap_with_geumseong = any(shifts_overlap(shift, gs) for gs in geumseong_shifts)
-                if has_overlap_with_geumseong and prefers == 1:
-                    return (9999, employee_priority[e["name"]])
-                elif has_overlap_with_geumseong:
-                    return (5 - prefers, employee_priority[e["name"]])
-                else:
-                    return (preference.get(clean_name, 3), employee_priority[e["name"]])
-
-            possible_emps.sort(key=sort_key)
+            possible_emps.sort(key=lambda e: employee_priority[e["name"]])
             chosen = possible_emps[0]
             name = chosen["name"]
             schedule[shift] = name
@@ -154,20 +145,20 @@ def save_schedule_excel(structured_schedule, output_path):
     df = pd.DataFrame(rows)
     df.to_excel(output_path, index=False)
 
-# if __name__ == "__main__":
-#     try:
-#         from parse_employees import parse_schedule
+if __name__ == "__main__":
+    try:
+        from parse_employees import parse_schedule
 
-#         filepath = "FOH Availability May 19-25.xlsx"
-#         employees = parse_schedule(filepath)
-#         print(f"Parsed {len(employees)} employees")
+        filepath = "FOH Availability May 19-25.xlsx"
+        employees = parse_schedule(filepath)
+        print(f"Parsed {len(employees)} employees")
 
-#         schedule = generate_schedule(employees, filepath)
+        schedule = generate_schedule(employees, filepath)
 
-#         print("\nGenerated Schedule:")
-#         for day in DAYS:
-#             for time, emp in schedule[day]:
-#                 print(f"{day} {time}: {emp}")
+        print("\nGenerated Schedule:")
+        for day in DAYS:
+            for time, emp in schedule[day]:
+                print(f"{day} {time}: {emp}")
 
-#     except Exception as e:
-#         print("❌ Error running schedule generation:", e)
+    except Exception as e:
+        print("❌ Error running schedule generation:", e)
