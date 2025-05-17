@@ -73,11 +73,11 @@ def generate_schedule(employees, file_path):
     preference_with_geumseong = {
         "Sam": 5,
         "Sungwoo": 5,
-        "Jonnah": 1,
+        "Jonnah": 2,
         "Minal": 4,
         "Minjung": 1,
         "Yujin": 3,
-        "Seoyoon": 1,
+        "Seoyoon": 2,
         "Fionna": 2,
         "Purvesh": 1,
         "Mandy": 5,
@@ -114,10 +114,14 @@ def generate_schedule(employees, file_path):
             def sort_key(e):
                 prefers = preference_with_geumseong.get(e["name"], 3)
                 has_overlap_with_geumseong = any(shifts_overlap(shift, gs) for gs in geumseong_shifts)
-                if has_overlap_with_geumseong:
-                    return (employee_priority[e["name"]], 5 - prefers)
+                if has_overlap_with_geumseong and prefers == 1:
+                    # Return a huge penalty number to effectively exclude low preference
+                    return (9999, employee_priority[e["name"]])
+                elif has_overlap_with_geumseong:
+                    return (5 - prefers, employee_priority[e["name"]])
                 else:
-                    return (employee_priority[e["name"]], preference[e["name"]])
+                    return (preference[e["name"]], employee_priority[e["name"]])
+
 
             possible_emps.sort(key=sort_key)
             chosen = possible_emps[0]
@@ -160,4 +164,3 @@ def save_schedule_excel(structured_schedule, output_path):
             rows.append({"Day": day, "Time": time, "Employee": emp})
     df = pd.DataFrame(rows)
     df.to_excel(output_path, index=False)
-
