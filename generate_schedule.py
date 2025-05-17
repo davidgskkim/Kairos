@@ -145,20 +145,20 @@ def save_schedule_excel(structured_schedule, output_path):
     df = pd.DataFrame(rows)
     df.to_excel(output_path, index=False)
 
-# if __name__ == "__main__":
-#     try:
-#         from parse_employees import parse_schedule
+if __name__ == "__main__":
+    try:
+        from parse_employees import parse_schedule
 
-#         filepath = "FOH Availability May 19-25.xlsx"
-#         employees = parse_schedule(filepath)
-#         print(f"Parsed {len(employees)} employees")
+        filepath = "FOH Availability May 19-25.xlsx"
+        employees = parse_schedule(filepath)
+        print(f"Parsed {len(employees)} employees")
 
-#         schedule = generate_schedule(employees, filepath)
+        schedule = generate_schedule(employees, filepath)
 
-#         print("\nGenerated Schedule:")
-#         for day in DAYS:
-#             for time, emp in schedule[day]:
-#                 print(f"{day} {time}: {emp}")
+        print("\nGenerated Schedule:")
+        for day in DAYS:
+            for time, emp in schedule[day]:
+                print(f"{day} {time}: {emp}")
 
-#     except Exception as e:
-#         print("❌ Error running schedule generation:", e)
+    except Exception as e:
+        print("❌ Error running schedule generation:", e)
