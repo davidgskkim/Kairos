@@ -1,0 +1,23 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+.DS_Store
+
+# --- Celery/Redis Logs ---
+celerybeat-schedule
+*.pid
+*.log
+
+# --- Javascript/React ---
+node_modules/
+dist/
+build/
+.output/
+package-lock.json # Optional: Keep this if you want exact versions, remove if you want cleaner diffs. Standard practice is to KEEP it.
+
+# --- IDEs ---
+.vscode/
+.idea/
