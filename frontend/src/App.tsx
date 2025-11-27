@@ -1,8 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Calendar, Users, Settings, Hourglass, Trash2, Plus, Zap, AlertCircle, Download } from 'lucide-react';
 import { FileDropzone } from './components/FileDropzone';
 
-// --- Types ---
+// --- Environment Configuration ---
+// If deployed, use the Env Var. If local, use localhost.
+const API_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
+
 interface Availability {
   day: string;
   time_slot: string;
@@ -38,9 +41,9 @@ function App() {
     try {
       const timestamp = Date.now();
       const [empRes, shiftRes, schedRes] = await Promise.all([
-        fetch(`http://127.0.0.1:8000/employees?t=${timestamp}`),
-        fetch(`http://127.0.0.1:8000/config/shifts?t=${timestamp}`),
-        fetch(`http://127.0.0.1:8000/schedule?t=${timestamp}`)
+        fetch(`${API_URL}/employees?t=${timestamp}`),
+        fetch(`${API_URL}/config/shifts?t=${timestamp}`),
+        fetch(`${API_URL}/schedule?t=${timestamp}`)
       ]);
 
       const [empData, shiftData, schedData] = await Promise.all([
@@ -60,7 +63,12 @@ function App() {
   // --- WebSocket ---
   useEffect(() => {
     fetchData();
-    const ws = new WebSocket('ws://127.0.0.1:8000/ws');
+    
+    // Auto-detect WebSocket protocol (ws:// or wss://)
+    const wsUrl = API_URL.replace(/^http/, 'ws') + '/ws';
+    console.log("🔌 Connecting to:", wsUrl);
+    
+    const ws = new WebSocket(wsUrl);
     
     ws.onmessage = (event) => {
       if (event.data === "roster_update" || event.data === "settings_update") {
@@ -78,7 +86,7 @@ function App() {
     formData.append("file", file);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/upload/roster', {
+      const res = await fetch(`${API_URL}/upload/roster`, {
         method: 'POST',
         body: formData,
       });
@@ -100,7 +108,7 @@ function App() {
     setGenerating(true);
     setSchedule([]);
     try {
-      const response = await fetch('http://127.0.0.1:8000/generate', { method: 'POST' });
+      const response = await fetch(`${API_URL}/generate`, { method: 'POST' });
       const data = await response.json();
       if (data.roster) setSchedule(data.roster);
     } catch (error) {
@@ -111,7 +119,7 @@ function App() {
   };
 
   const addShiftDef = async () => {
-    await fetch('http://127.0.0.1:8000/config/shifts', {
+    await fetch(`${API_URL}/config/shifts`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ day: newDay, time_slot: newTime })
@@ -119,7 +127,7 @@ function App() {
   };
 
   const deleteShiftDef = async (id: number) => {
-    await fetch(`http://127.0.0.1:8000/config/shifts/${id}`, { method: 'DELETE' });
+    await fetch(`${API_URL}/config/shifts/${id}`, { method: 'DELETE' });
   };
 
   const downloadHomebaseCSV = () => {
@@ -150,7 +158,6 @@ function App() {
           
           {/* LOGO & BRANDING */}
           <div className="flex items-center gap-3">
-            {/* Icon with Glow */}
             <div className="relative group cursor-pointer">
               <div className="absolute -inset-2 bg-blue-500/20 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition duration-500"></div>
               <div className="relative w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center border border-slate-700/50 shadow-2xl">
@@ -158,13 +165,12 @@ function App() {
               </div>
             </div>
             
-            {/* Text - Perfectly Aligned */}
             <div className="flex flex-col justify-center h-10">
               <span className="text-2xl font-black tracking-widest text-transparent bg-clip-text bg-linear-to-r from-white via-blue-100 to-blue-500 drop-shadow-sm font-sans">
                 KAIROS
               </span>
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.35em] ml-0.5">
-                PRECISION SCHEDULING
+                TIME, OPTIMIZED
               </span>
             </div>
           </div>
