@@ -1,53 +1,89 @@
-# Kairos: Intelligent Distributed Scheduling Platform
+# ⏳ Kairos - Intelligent Distributed Scheduling Platform
 
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
-![Stack](https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%7C%20PostgreSQL%20%7C%20Redis-blue)
+![Stack](https://img.shields.io/badge/Stack-React%20|%20FastAPI%20|%20PostgreSQL%20|%20Redis%20|%20Celery-6366f1)
 
-**Kairos** (Ancient Greek: *The Opportune Moment*) is a high-performance workforce management engine designed to solve complex scheduling constraints. Unlike traditional greedy scheduling scripts, Kairos utilizes **Constraint Programming (CP-SAT)** to mathematically optimize staff coverage while respecting individual availability, fairness rules, and business demand.
+Kairos is a high-performance workforce management engine designed to automate complex staff rostering. Unlike traditional greedy scheduling scripts, it uses constraint programming (CP-SAT) to mathematically optimize staff coverage while respecting availability, fairness rules, and business demand.
 
-This project demonstrates a **Distributed System Architecture**, decoupling the heavy computational logic from the REST API using asynchronous background workers and real-time WebSocket synchronization.
+**Live Demo:** [https://kairos-app.vercel.app](https://kairos-app.vercel.app)
 
-## 🚀 Key Features
+## ✨ Key Features
 
-* **Constraint Satisfaction Engine:** Modeled using **Google OR-Tools** to solve NP-hard scheduling problems, optimizing for maximum coverage and equitable shift distribution.
-* **Distributed Architecture:** Offloads heavy solver computations to **Celery** workers backed by **Redis**, ensuring the API remains non-blocking and responsive.
-* **Real-Time Collaboration:** Implements a **WebSocket** layer that synchronizes the interface across multiple clients instantly (Optimistic UI updates).
-* **Dynamic Data Ingestion:** Features a drag-and-drop Excel parser that intelligently maps "messy" real-world availability data (e.g., "Open", "Close", "On") into structured database records using dynamic legend detection.
-* **Homebase Integration:** Generates CSV exports formatted specifically for one-click import into Homebase/Payroll systems.
+* **🧩 Constraint Satisfaction Engine:** Modeled using **Google OR-Tools** to solve NP-hard scheduling problems, optimizing for maximum coverage and equitable shift distribution.
+* **⚡ Distributed Architecture:** Offloads heavy solver computations to **Celery** workers backed by **Redis**, ensuring the API remains non-blocking and responsive.
+* **🔄 Real-Time Collaboration:** Implements a **WebSocket** layer that synchronizes the interface across multiple clients instantly (Optimistic UI updates).
+* **📂 Dynamic Data Ingestion:** Features a drag-and-drop Excel parser that intelligently maps "messy" real-world availability data (e.g., "Open", "Close", "On") into structured database records.
+* **📅 Homebase Integration:** Generates CSV exports formatted specifically for one-click import into Homebase/Payroll systems.
 
-## 🛠️ Technical Stack
+## 🛠️ Tech Stack
 
-### Backend (Python)
-* **Framework:** FastAPI (Async/Await)
-* **Database:** PostgreSQL (via Supabase), SQLAlchemy ORM
-* **Task Queue:** Celery + Redis (Upstash)
-* **Algorithm:** Google OR-Tools (CP-SAT Solver)
-* **Data Processing:** Pandas (Excel parsing)
+**Frontend:**
+* React (Vite)
+* Tailwind CSS (v4)
+* Lucide React (Icons)
+* WebSockets (Real-time State)
 
-### Frontend (TypeScript)
-* **Framework:** React + Vite
-* **Styling:** Tailwind CSS v4
-* **Icons:** Lucide React
-* **State Management:** Real-time WebSockets + React Hooks
+**Backend:**
+* Python (FastAPI)
+* PostgreSQL (Supabase)
+* Redis (Upstash) & Celery (Async Tasks)
+* Google OR-Tools (CP-SAT Solver)
+* Pandas (Data Processing)
 
-## 🏗️ System Architecture
+**Deployment:**
+* Frontend: Vercel
+* Backend: Render
 
-1.  **Client Action:** User uploads a roster or clicks "Generate Schedule" on the React Frontend.
-2.  **API Layer:** FastAPI accepts the request and pushes a task to the **Redis Message Broker**.
-3.  **Worker Layer:** A generic **Celery Worker** picks up the task, fetches constraints from **PostgreSQL**, and runs the CP-SAT solver.
-4.  **Optimization:** The solver evaluates thousands of permutations to find the optimal schedule while preventing overlaps and ensuring fairness.
-5.  **Broadcast:** Upon completion, the worker notifies the API, which blasts a `roster_update` event via **WebSockets** to all connected clients, refreshing their screens instantly.
-
-## ⚡ Getting Started
+## 🚀 Getting Started
 
 ### Prerequisites
 * Node.js (v18+)
 * Python (3.10+)
-* Redis (Cloud URL recommended for Windows)
-* PostgreSQL (Supabase recommended)
+* PostgreSQL Database (Supabase recommended)
+* Redis Instance (Upstash recommended)
 
-### 1. Environment Setup
-Create a `.env` file in the `/backend` directory (optional but recommended for production):
-```env
-DATABASE_URL=postgresql://user:pass@endpoint:5432/postgres
-REDIS_URL=rediss://default:pass@endpoint:6379
+### Installation
+
+1.  **Clone the repository:**
+    ```bash
+    git clone [https://github.com/davidgskkim/kairos.git](https://github.com/davidgskkim/kairos.git)
+    cd kairos
+    ```
+
+2.  **Install Backend Dependencies:**
+    ```bash
+    cd backend
+    python -m venv venv
+    # Windows: venv\Scripts\activate | Mac: source venv/bin/activate
+    pip install -r requirements.txt
+    ```
+
+3.  **Install Frontend Dependencies:**
+    ```bash
+    cd ../frontend
+    npm install
+    ```
+
+4.  **Environment Setup:**
+    Create a `.env` file in the `/backend` directory:
+    ```env
+    DATABASE_URL=postgresql://user:pass@endpoint:5432/postgres
+    REDIS_URL=rediss://default:pass@endpoint:6379
+    ```
+
+5.  **Run Locally:**
+    * **Backend API:** `cd backend && py -m uvicorn main:app --reload`
+    * **Background Worker:** `cd backend && py -m celery -A worker.celery_app worker --loglevel=info -P eventlet`
+    * **Frontend:** `cd frontend && npm run dev`
+
+## 📸 Screenshots
+
+| Dashboard 
+|:---:
+| ![Dashboard](./assets/kairos.png) 
+
+## 👤 Author
+
+**David Kim**
+* [LinkedIn](https://www.linkedin.com/in/david-gs-kim)
+* [GitHub](https://github.com/davidgskkim)
