@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Calendar, Users, Settings, Hourglass, Trash2, Plus, Zap, AlertCircle, Download } from 'lucide-react';
 import { FileDropzone } from './components/FileDropzone';
 
