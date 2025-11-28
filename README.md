@@ -5,7 +5,7 @@
 
 Kairos is a high-performance workforce management engine designed to automate complex staff rostering. Unlike traditional greedy scheduling scripts, it uses constraint programming (CP-SAT) to mathematically optimize staff coverage while respecting availability, fairness rules, and business demand.
 
-**Live Demo:** [https://kairos-app.vercel.app](https://kairos-app.vercel.app)
+**Live Demo:** [https://kairos-david-kim.vercel.app/](https://kairos-david-kim.vercel.app/)
 
 ## ✨ Key Features
 
