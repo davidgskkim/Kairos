@@ -2,9 +2,8 @@ from celery import Celery
 import os
 import requests 
 
-DEFAULT_UPSTASH = "rediss://default:ARpcAAImcDI5YTM5MzgyNzA0MTU0YjYzYjNmMDliMDk4YjA1NGFjMnAyNjc0OA@desired-gar-6748.upstash.io:6379?ssl_cert_reqs=CERT_NONE"
+DEFAULT_UPSTASH = "rediss://default:AcLfAAIncDI4MTQyMjZmNjUxYjI0Zjk5OTY5NGViOTcyNGQzMjA2ZXAyNDk4ODc@working-donkey-49887.upstash.io:6379?ssl_cert_reqs=CERT_NONE"
 REDIS_URL = os.getenv("REDIS_URL", DEFAULT_UPSTASH)
-
 celery_app = Celery("kairos_worker", broker=REDIS_URL, backend=REDIS_URL)
 
 @celery_app.task
